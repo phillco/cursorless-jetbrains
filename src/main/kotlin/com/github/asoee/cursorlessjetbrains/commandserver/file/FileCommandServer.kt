@@ -5,6 +5,8 @@ import com.github.asoee.cursorlessjetbrains.services.TalonProjectService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.BufferedReader
@@ -13,6 +15,7 @@ import java.io.InputStreamReader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.time.LocalDateTime
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readText
@@ -119,6 +122,11 @@ class FileCommandServer {
                 )
                 writeResponse(response)
             } else {
+                // Show error notification in the IDE
+                val fullError = result.error ?: "Unknown error occurred"
+                val errorMessage = formatErrorMessage(fullError)
+                showErrorNotification(project, "Cursorless Command Failed", errorMessage, fullError)
+                
                 val response = CommandServerResponse(
                     request.uuid,
                     emptyArray(),
@@ -128,6 +136,92 @@ class FileCommandServer {
 
                 writeResponse(response)
             }
+        }
+    }
+    
+    private fun formatErrorMessage(error: String): String {
+        // Extract the most relevant part of the error message
+        return when {
+            error.contains("is not defined") -> {
+                // JavaScript reference errors
+                error.substringBefore(" at ").trim()
+            }
+            error.contains("Error:") -> {
+                // Error with stack trace - get just the error message
+                error.substringAfter("Error:").substringBefore("\n").trim()
+            }
+            error.contains("Exception:") -> {
+                // Java exceptions
+                error.substringAfter("Exception:").substringBefore("\n").trim()
+            }
+            else -> error.take(200) // Limit length for readability
+        }
+    }
+    
+    private fun showErrorNotification(project: Project, title: String, content: String, fullError: String) {
+        val notification = NotificationGroupManager.getInstance()
+            .getNotificationGroup("vc-idea")
+            .createNotification(title, content, NotificationType.ERROR)
+        
+        // Add action to view full error details
+        notification.addAction(object : com.intellij.notification.NotificationAction("View Full Error") {
+            override fun actionPerformed(e: com.intellij.openapi.actionSystem.AnActionEvent, notification: com.intellij.notification.Notification) {
+                // Store the full error in a temporary file and open it
+                showFullError(project, fullError)
+                notification.expire()
+            }
+        })
+        
+        notification.notify(project)
+    }
+    
+    private fun showFullError(project: Project, fullError: String) {
+        try {
+            // Create a temporary file with the full error
+            val tempFile = Files.createTempFile("cursorless-error-", ".txt")
+            
+            // Extract command information if available from the request
+            val commandInfo = try {
+                val lastRequest = commandServerDir.resolve("request.json")
+                if (lastRequest.exists()) {
+                    "Last Command Request:\n${lastRequest.readText()}\n"
+                } else {
+                    ""
+                }
+            } catch (e: Exception) {
+                ""
+            }
+            
+            tempFile.toFile().writeText("""
+Cursorless Command Error Details
+================================
+Time: ${LocalDateTime.now()}
+
+${commandInfo}Full Error:
+-----------
+$fullError
+
+${if (fullError.contains("\n")) "" else """Stack Trace:
+------------
+No stack trace available. This error appears to be a simple error message.
+
+Common causes:
+- The command/feature is not yet implemented
+- Invalid command parameters
+- Missing dependencies or configuration
+"""}
+
+Note: This file contains the complete error information available.
+You can share this with the plugin developers if needed.
+            """.trimIndent())
+            
+            // Open the file in the IDE
+            val virtualFile = com.intellij.openapi.vfs.LocalFileSystem.getInstance().refreshAndFindFileByPath(tempFile.toString())
+            if (virtualFile != null) {
+                com.intellij.openapi.fileEditor.FileEditorManager.getInstance(project).openFile(virtualFile, true)
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to show full error", e)
         }
     }
 

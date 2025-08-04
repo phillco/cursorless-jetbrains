@@ -295,7 +295,9 @@ open class JavetDriver {
             |       }
             |     } catch (e) {                      
             |       console.error("error in runCommand - " + e);
-            |       throw e;
+            |       // Include stack trace if available
+            |       const errorInfo = e.stack || e.toString();
+            |       throw new Error(errorInfo);
             |     }
             |   } else {
             |     console.log("cursorless engine not available");
@@ -510,6 +512,23 @@ class PromiseCallback : IV8ValuePromise.IListener {
         if (v8Value is V8ValueError) {
             val v8ValueError = v8Value as V8ValueError
             logger.warn("error in execute - $v8ValueError")
+            // Try to get stack trace from the error object
+            val stackTrace = try {
+                if (v8ValueError.hasOwnProperty("stack")) {
+                    v8ValueError.getString("stack")
+                } else {
+                    null
+                }
+            } catch (e: Exception) {
+                null
+            }
+            error = stackTrace ?: v8ValueError.message ?: v8ValueError.toString()
+        } else if (v8Value is V8ValueString) {
+            val v8ValueString = v8Value as V8ValueString
+            logger.warn("error in execute - $v8ValueString")
+            error = v8ValueString.value
+        } else if (v8Value != null) {
+            error = v8Value.toString()
         }
     }
 
