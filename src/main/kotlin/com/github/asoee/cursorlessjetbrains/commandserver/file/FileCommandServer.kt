@@ -2,6 +2,11 @@ package com.github.asoee.cursorlessjetbrains.commandserver.file
 
 import com.github.asoee.cursorlessjetbrains.javet.ExecutionResult
 import com.github.asoee.cursorlessjetbrains.services.TalonProjectService
+import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.impl.ConsoleViewImpl
+import com.intellij.execution.ui.ConsoleViewContentType
+import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.execution.ui.RunContentManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -177,9 +182,6 @@ class FileCommandServer {
     
     private fun showFullError(project: Project, fullError: String) {
         try {
-            // Create a temporary file with the full error
-            val tempFile = Files.createTempFile("cursorless-error-", ".txt")
-            
             // Extract command information if available from the request
             val commandInfo = try {
                 val lastRequest = commandServerDir.resolve("request.json")
@@ -192,7 +194,7 @@ class FileCommandServer {
                 ""
             }
             
-            tempFile.toFile().writeText("""
+            val errorOutput = """
 Cursorless Command Error Details
 ================================
 Time: ${LocalDateTime.now()}
@@ -213,13 +215,25 @@ Common causes:
 
 Note: This file contains the complete error information available.
 You can share this with the plugin developers if needed.
-            """.trimIndent())
+            """.trimIndent()
             
-            // Open the file in the IDE
-            val virtualFile = com.intellij.openapi.vfs.LocalFileSystem.getInstance().refreshAndFindFileByPath(tempFile.toString())
-            if (virtualFile != null) {
-                com.intellij.openapi.fileEditor.FileEditorManager.getInstance(project).openFile(virtualFile, true)
-            }
+            // Display in console using ConsoleViewContentType
+            com.intellij.execution.ui.ConsoleViewContentType.ERROR_OUTPUT
+            val consoleView = com.intellij.execution.impl.ConsoleViewImpl(project, true)
+            consoleView.print(errorOutput, com.intellij.execution.ui.ConsoleViewContentType.ERROR_OUTPUT)
+            
+            // Create a content descriptor to show in tool window
+            val descriptor = com.intellij.execution.ui.RunContentDescriptor(
+                consoleView,
+                null,
+                consoleView.component,
+                "Cursorless Error Details"
+            )
+            
+            // Show in Run tool window
+            val executor = com.intellij.execution.executors.DefaultRunExecutor.getRunExecutorInstance()
+            com.intellij.execution.ui.RunContentManager.getInstance(project).showRunContent(executor, descriptor)
+            
         } catch (e: Exception) {
             logger.warn("Failed to show full error", e)
         }
