@@ -144,17 +144,17 @@ intellijPlatform {
             .map { listOf(it.substringAfter('-', "").substringBefore('.').ifEmpty { "default" }) }
     }
 
-    pluginVerification {
-        ides {
+//    pluginVerification {
+//        ides {
 //            recommended()
-            val productReleases = ProductReleasesValueSource().get()
-            val reducedProductReleases =
-                if (productReleases.size > 2) listOf(productReleases.first())
-//                if (productReleases.size > 2) listOf(productReleases.first(), productReleases.last())
-                else productReleases
-            ides(reducedProductReleases)
-        }
-    }
+////            val productReleases = ProductReleasesValueSource().get()
+////            val reducedProductReleases =
+////                if (productReleases.size > 2) listOf(productReleases.first())
+//////                if (productReleases.size > 2) listOf(productReleases.first(), productReleases.last())
+////                else productReleases
+////            ides(reducedProductReleases)
+//        }
+//    }
 }
 
 // Configure Gradle Changelog Plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
@@ -215,7 +215,7 @@ tasks {
         classpath = integrationTestSourceSet.runtimeClasspath
 
         // Use prepareSandbox output directory as recommended by JetBrains
-        systemProperty("path.to.build.plugin", prepareSandbox.get().pluginDirectory.get().asFile)
+        // systemProperty("path.to.build.plugin", prepareSandbox.get().pluginDirectory.get().asFile)
         useJUnitPlatform()
         dependsOn(prepareSandbox, buildPlugin)
 

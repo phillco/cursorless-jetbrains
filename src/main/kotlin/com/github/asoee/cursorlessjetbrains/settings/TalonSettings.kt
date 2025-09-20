@@ -31,6 +31,22 @@ class TalonSettings
         var flashRangeDuration: Int = 100
         var hatShapeSettings: List<ShapeSetting> = shapeFromDefaults()
         var hatColorSettings: List<ColorSetting> = colorFromDefaults()
+        
+        // Particle effect settings
+        var enableParticleEffects: Boolean = true
+        var particleIntensity: Int = 100  // 0-200, controls particle count
+        var particleLifetime: Int = 1500  // milliseconds
+        var particleGravity: Boolean = true
+        var particleStyle: ParticleStyle = ParticleStyle.SPARKLES
+    }
+    
+    enum class ParticleStyle {
+        SPARKLES,    // ✨ and dots
+        FIRE,        // 🔥 flame-like particles going up
+        SMOKE,       // 💨 gray particles drifting up
+        MATRIX,      // Green characters falling down
+        CONFETTI,    // 🎉 colorful squares
+        SNOW         // ❄️ white particles falling down
     }
 
     data class ShapeSetting(

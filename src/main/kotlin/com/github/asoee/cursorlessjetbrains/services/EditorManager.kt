@@ -2,6 +2,8 @@ package com.github.asoee.cursorlessjetbrains.services
 
 import com.github.asoee.cursorlessjetbrains.commands.*
 import com.github.asoee.cursorlessjetbrains.cursorless.*
+import com.github.asoee.cursorlessjetbrains.effects.ParticleEffect
+import com.github.asoee.cursorlessjetbrains.effects.ParticleEffectPainter
 import com.github.asoee.cursorlessjetbrains.listeners.getCursorlessContainers
 import com.github.asoee.cursorlessjetbrains.settings.TalonSettings
 import com.github.asoee.cursorlessjetbrains.sync.EditorState
@@ -44,6 +46,7 @@ class EditorManager(private val cursorlessEngine: CursorlessEngine, parentDispos
     private val editorIds = HashMap<Editor, String>()
     private val editorsById = HashMap<String, Editor>()
     private val editorDebounce = HashMap<String, MutableSharedFlow<EditorChange>>()
+    private val particleEffects = HashMap<Editor, ParticleEffect>()
 
     private val dispatchScope = cs
     private val emitScope = cs
@@ -232,6 +235,35 @@ class EditorManager(private val cursorlessEngine: CursorlessEngine, parentDispos
                             {
                                 for (change in edit.changes) {
                                     logger.debug("Setting range to " + change.rangeOffset.toString() + " - " + change.rangeOffset.toString() + " : " + change.text)
+                                    
+                                    // Check if this is a deletion (text being removed)
+                                    if (change.rangeLength > 0 && change.text.isEmpty()) {
+                                        // Get the text that's about to be deleted
+                                        val deletedText = editor.document.getText(TextRange(change.rangeOffset, change.rangeOffset + change.rangeLength))
+                                        
+                                        // Get or create particle effect for this editor
+                                        val particleEffect = particleEffects.getOrPut(editor) {
+                                            val effect = ParticleEffect(editor)
+                                            // Add a custom painter to render particles
+                                            val painter = ParticleEffectPainter(effect)
+                                            val highlighter = editor.markupModel.addRangeHighlighter(
+                                                0,
+                                                editor.document.textLength,
+                                                ParticleEffectPainter.PARTICLE_LAYER,
+                                                null,
+                                                com.intellij.openapi.editor.markup.HighlighterTargetArea.EXACT_RANGE
+                                            )
+                                            highlighter.customRenderer = painter
+                                            effect
+                                        }
+                                        
+                                        // Emit particles before the text is deleted
+                                        particleEffect.emitParticlesForDeletedText(
+                                            TextRange(change.rangeOffset, change.rangeOffset + change.rangeLength),
+                                            deletedText
+                                        )
+                                    }
+                                    
                                     editor.document.replaceString(
                                         change.rangeOffset,
                                         change.rangeOffset + change.rangeLength,
@@ -258,6 +290,11 @@ class EditorManager(private val cursorlessEngine: CursorlessEngine, parentDispos
     fun editorClosed(editor: Editor) {
         val id = editorIds[editor]
         editorIds.remove(editor)
+        
+        // Clean up particle effects for this editor
+        particleEffects[editor]?.dispose()
+        particleEffects.remove(editor)
+        
         if (id != null) {
             editorsById.remove(id)
             dispatchScope.launch {
