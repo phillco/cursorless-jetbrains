@@ -209,7 +209,10 @@ tasks {
         classpath = integrationTestSourceSet.runtimeClasspath
 
         // Use prepareSandbox output directory as recommended by JetBrains
-        systemProperty("path.to.build.plugin", prepareSandbox.get().pluginDirectory.get().asFile)
+        // NOTE: Using lazy provider to avoid eager resolution of IntelliJ platform
+        doFirst {
+            systemProperty("path.to.build.plugin", prepareSandbox.get().pluginDirectory.get().asFile)
+        }
         useJUnitPlatform()
         dependsOn(prepareSandbox, buildPlugin)
 
