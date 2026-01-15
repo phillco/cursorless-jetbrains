@@ -47,6 +47,36 @@
                 class="com.github.asoee.cursorlessjetbrains.action.CursorlessToggleCommand"
                 text="Cursorless Toggle"
                 description="Toggle cursorless hats"/>
+
+        <!-- Tab reordering actions -->
+        <action id="Talon.MoveTabLeft"
+                class="com.github.asoee.cursorlessjetbrains.action.MoveTabLeftAction"
+                text="Move Tab Left"
+                description="Move the current editor tab one position to the left">
+            <keyboard-shortcut keymap="$default" first-keystroke="control alt shift LEFT"/>
+            <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
+        </action>
+        <action id="Talon.MoveTabRight"
+                class="com.github.asoee.cursorlessjetbrains.action.MoveTabRightAction"
+                text="Move Tab Right"
+                description="Move the current editor tab one position to the right">
+            <keyboard-shortcut keymap="$default" first-keystroke="control alt shift RIGHT"/>
+            <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
+        </action>
+        <action id="Talon.MoveTabToFirst"
+                class="com.github.asoee.cursorlessjetbrains.action.MoveTabToFirstAction"
+                text="Move Tab to First"
+                description="Move the current editor tab to the first position">
+            <keyboard-shortcut keymap="$default" first-keystroke="control alt shift UP"/>
+            <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
+        </action>
+        <action id="Talon.MoveTabToLast"
+                class="com.github.asoee.cursorlessjetbrains.action.MoveTabToLastAction"
+                text="Move Tab to Last"
+                description="Move the current editor tab to the last position">
+            <keyboard-shortcut keymap="$default" first-keystroke="control alt shift DOWN"/>
+            <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
+        </action>
     </actions>
 
     <projectListeners>
