@@ -2,11 +2,12 @@
 
 ## [Unreleased]
 
-### Fixed
+## [0.0.15] - 2026-01-15
 
-- Tighten up javet javascript handling to prevent memory leaks
-- Restart JS engine when close to limit, if GC does not help
-- Limit file size sent to cursorless. Default to 1 Mb, but adjustable from settings.
+- **Tab Reordering Actions**: Move tabs left/right/first/last with keyboard shortcuts
+  - `Ctrl+Alt+Shift+Left/Right`: Move tab left/right (wraps around at edges)
+  - `Ctrl+Alt+Shift+Up/Down`: Move tab to first/last position
+  - Actions also available in tab right-click menu
 
 ## [0.0.14] - 2025-09-26
 
@@ -180,7 +181,8 @@
 - Communication with talon using both HTTP and file based command server
 - Most voice-code commands added to the plugin
 
-[Unreleased]: https://github.com/asoee/cursorless-jetbrains/compare/v0.0.14...HEAD
+[Unreleased]: https://github.com/asoee/cursorless-jetbrains/compare/v0.0.15...HEAD
+[0.0.15]: https://github.com/asoee/cursorless-jetbrains/compare/v0.0.14...v0.0.15
 [0.0.14]: https://github.com/asoee/cursorless-jetbrains/compare/v0.0.13...v0.0.14
 [0.0.13]: https://github.com/asoee/cursorless-jetbrains/compare/v0.0.12...v0.0.13
 [0.0.12]: https://github.com/asoee/cursorless-jetbrains/compare/v0.0.11...v0.0.12
